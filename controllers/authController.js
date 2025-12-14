@@ -81,8 +81,22 @@ exports.login = catchAsync( async(req,res,next) =>{
 });
 
 exports.restrictTo = (...roles)=>{
-    return (req,res,next)=>{
+    return async (req,res,next)=>{
         //roles is an array['admin','lead-guide']
+        const token = req.cookies.jwt;
+        if(!token){
+            return next(new AppError('You are not logged in! please log in to get access.', 401))
+        }
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+    const user = await taskUser1.findById(decoded.id).select('-password');
+
+    if (!user) {
+      return res.status(401).json({ message: 'User not found' });
+    }
+
+    //  CURRENT USER
+    req.user = user;
         if(!roles.includes(req.user.role)){
             
            
